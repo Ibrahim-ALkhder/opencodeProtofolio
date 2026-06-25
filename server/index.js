@@ -8,6 +8,7 @@ import { projectsRouter } from "./routes/projects.js";
 import { certificatesRouter } from "./routes/certificates.js";
 import { cvRouter } from "./routes/cv.js";
 import { authRouter } from "./routes/auth.js";
+import { initDb } from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,6 +47,13 @@ if (fs.existsSync(distPath)) {
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+initDb()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Database initialization failed:", err);
+    process.exit(1);
+  });

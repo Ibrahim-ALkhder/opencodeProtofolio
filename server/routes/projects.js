@@ -1,105 +1,167 @@
 import { Router } from "express";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "./auth.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = path.join(__dirname, "..", "data", "projects.json");
-
-function readProjects() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
-}
-
-function writeProjects(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+import db from "../db.js";
 
 export const projectsRouter = Router();
 
-projectsRouter.get("/", (req, res) => {
-  const projects = readProjects();
-  res.json(projects);
-});
-
-projectsRouter.get("/:id", (req, res) => {
-  const projects = readProjects();
-  const project = projects.find((p) => p.id === req.params.id);
-  if (!project) return res.status(404).json({ error: "Project not found" });
-  res.json(project);
-});
-
-projectsRouter.post("/", requireAuth, (req, res) => {
-  const projects = readProjects();
-  let slug = req.body.slug || "";
-  if (!slug) {
-    slug = req.body.title
-      ?.toLowerCase()
-      .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-      .replace(/-+/g, "-");
-  }
-  if (!slug) slug = "project-" + Date.now();
-  const project = {
-    id: uuidv4(),
-    title: req.body.title || "",
-    slug,
-    shortDescription: req.body.shortDescription || "",
-    description: req.body.description || "",
-    button: "View Project",
-    variant: req.body.variant || "dashboard",
-    isFeatured: req.body.isFeatured || false,
-    problem: req.body.problem || "",
-    solution: req.body.solution || "",
-    features: req.body.features || [],
-    techStack: req.body.techStack || [],
-    challenges: req.body.challenges || [],
-    results: req.body.results || "",
-    timeline: req.body.timeline || "",
-    liveUrl: req.body.liveUrl || "",
-    githubUrl: req.body.githubUrl || "",
-    screenshots: req.body.screenshots || { desktop: null, tablet: null, mobile: null },
-    createdAt: new Date().toISOString(),
+function parseProject(row) {
+  return {
+    ...row,
+    isFeatured: Boolean(row.isFeatured),
+    features: JSON.parse(row.features || "[]"),
+    techStack: JSON.parse(row.techStack || "[]"),
+    challenges: JSON.parse(row.challenges || "[]"),
+    screenshots: JSON.parse(row.screenshots || "{}"),
   };
-  projects.push(project);
-  writeProjects(projects);
-  res.status(201).json(project);
-});
+}
 
-projectsRouter.put("/:id", requireAuth, (req, res) => {
-  const projects = readProjects();
-  const index = projects.findIndex((p) => p.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: "Project not found" });
+function generateSlug(title) {
+  let slug = title
+    ?.toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .replace(/-+/g, "-");
+  return slug || "project-" + Date.now();
+}
 
-  const updated = { ...projects[index], ...req.body, id: req.params.id };
-  projects[index] = updated;
-  writeProjects(projects);
-  res.json(updated);
-});
-
-projectsRouter.delete("/:id", requireAuth, (req, res) => {
-  let projects = readProjects();
-  projects = projects.filter((p) => p.id !== req.params.id);
-  writeProjects(projects);
-  res.json({ success: true });
-});
-
-projectsRouter.put("/:id/screenshots/:type", requireAuth, (req, res) => {
-  const projects = readProjects();
-  const index = projects.findIndex((p) => p.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: "Project not found" });
-
-  const { type } = req.params;
-  if (!["desktop", "tablet", "mobile"].includes(type)) {
-    return res.status(400).json({ error: "Invalid screenshot type" });
+projectsRouter.get("/", async (req, res) => {
+  try {
+    const result = await db.execute("SELECT * FROM projects ORDER BY createdAt DESC");
+    res.json(result.rows.map(parseProject));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+});
 
-  projects[index].screenshots[type] = req.body.image;
-  writeProjects(projects);
-  res.json(projects[index]);
+projectsRouter.get("/:id", async (req, res) => {
+  try {
+    const result = await db.execute("SELECT * FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Project not found" });
+    res.json(parseProject(result.rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+projectsRouter.post("/", requireAuth, async (req, res) => {
+  try {
+    const slug = req.body.slug || generateSlug(req.body.title);
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    await db.execute(
+      `INSERT INTO projects (id, title, slug, shortDescription, description, button, variant, isFeatured, problem, solution, features, techStack, challenges, results, timeline, liveUrl, githubUrl, screenshots, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        req.body.title || "",
+        slug,
+        req.body.shortDescription || "",
+        req.body.description || "",
+        "View Project",
+        req.body.variant || "dashboard",
+        req.body.isFeatured ? 1 : 0,
+        req.body.problem || "",
+        req.body.solution || "",
+        JSON.stringify(req.body.features || []),
+        JSON.stringify(req.body.techStack || []),
+        JSON.stringify(req.body.challenges || []),
+        req.body.results || "",
+        req.body.timeline || "",
+        req.body.liveUrl || "",
+        req.body.githubUrl || "",
+        JSON.stringify(req.body.screenshots || { desktop: null, tablet: null, mobile: null }),
+        now,
+      ]
+    );
+    const result = await db.execute("SELECT * FROM projects WHERE id = ?", [id]);
+    res.status(201).json(parseProject(result.rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+projectsRouter.put("/:id", requireAuth, async (req, res) => {
+  try {
+    const existing = await db.execute("SELECT * FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (existing.rows.length === 0)
+      return res.status(404).json({ error: "Project not found" });
+
+    const current = existing.rows[0];
+    await db.execute(
+      `UPDATE projects SET title=?, slug=?, shortDescription=?, description=?, variant=?, isFeatured=?, problem=?, solution=?, features=?, techStack=?, challenges=?, results=?, timeline=?, liveUrl=?, githubUrl=?, screenshots=? WHERE id=?`,
+      [
+        req.body.title ?? current.title,
+        req.body.slug ?? current.slug,
+        req.body.shortDescription ?? current.shortDescription,
+        req.body.description ?? current.description,
+        req.body.variant ?? current.variant,
+        req.body.isFeatured !== undefined ? (req.body.isFeatured ? 1 : 0) : current.isFeatured,
+        req.body.problem ?? current.problem,
+        req.body.solution ?? current.solution,
+        JSON.stringify(req.body.features ?? JSON.parse(current.features || "[]")),
+        JSON.stringify(req.body.techStack ?? JSON.parse(current.techStack || "[]")),
+        JSON.stringify(req.body.challenges ?? JSON.parse(current.challenges || "[]")),
+        req.body.results ?? current.results,
+        req.body.timeline ?? current.timeline,
+        req.body.liveUrl ?? current.liveUrl,
+        req.body.githubUrl ?? current.githubUrl,
+        JSON.stringify(req.body.screenshots ?? JSON.parse(current.screenshots || "{}")),
+        req.params.id,
+      ]
+    );
+    const result = await db.execute("SELECT * FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    res.json(parseProject(result.rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+projectsRouter.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const result = await db.execute("DELETE FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.rowsAffected === 0)
+      return res.status(404).json({ error: "Project not found" });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+projectsRouter.put("/:id/screenshots/:type", requireAuth, async (req, res) => {
+  try {
+    const existing = await db.execute("SELECT * FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (existing.rows.length === 0)
+      return res.status(404).json({ error: "Project not found" });
+
+    const { type } = req.params;
+    if (!["desktop", "tablet", "mobile"].includes(type)) {
+      return res.status(400).json({ error: "Invalid screenshot type" });
+    }
+
+    const currentScreenshots = JSON.parse(existing.rows[0].screenshots || "{}");
+    currentScreenshots[type] = req.body.image;
+
+    await db.execute("UPDATE projects SET screenshots = ? WHERE id = ?", [
+      JSON.stringify(currentScreenshots),
+      req.params.id,
+    ]);
+
+    const result = await db.execute("SELECT * FROM projects WHERE id = ?", [
+      req.params.id,
+    ]);
+    res.json(parseProject(result.rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });

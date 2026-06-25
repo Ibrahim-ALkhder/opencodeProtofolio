@@ -1,71 +1,97 @@
 import { Router } from "express";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "./auth.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = path.join(__dirname, "..", "data", "certificates.json");
-
-function readCertificates() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
-}
-
-function writeCertificates(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+import db from "../db.js";
 
 export const certificatesRouter = Router();
 
-certificatesRouter.get("/", (req, res) => {
-  const certificates = readCertificates();
-  res.json(certificates);
+certificatesRouter.get("/", async (req, res) => {
+  try {
+    const result = await db.execute("SELECT * FROM certificates ORDER BY createdAt DESC");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-certificatesRouter.get("/:id", (req, res) => {
-  const certificates = readCertificates();
-  const cert = certificates.find((c) => c.id === req.params.id);
-  if (!cert) return res.status(404).json({ error: "Certificate not found" });
-  res.json(cert);
+certificatesRouter.get("/:id", async (req, res) => {
+  try {
+    const result = await db.execute("SELECT * FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Certificate not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-certificatesRouter.post("/", requireAuth, (req, res) => {
-  const certificates = readCertificates();
-  const cert = {
-    id: uuidv4(),
-    title: req.body.title || "",
-    issuer: req.body.issuer || "",
-    issued: req.body.issued || "",
-    credentialLink: req.body.credentialLink || "",
-    thumbnail: req.body.thumbnail || null,
-    description: req.body.description || "",
-    category: req.body.category || "Other",
-    createdAt: new Date().toISOString(),
-  };
-  certificates.push(cert);
-  writeCertificates(certificates);
-  res.status(201).json(cert);
+certificatesRouter.post("/", requireAuth, async (req, res) => {
+  try {
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    await db.execute(
+      `INSERT INTO certificates (id, title, issuer, issued, credentialLink, thumbnail, description, category, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        req.body.title || "",
+        req.body.issuer || "",
+        req.body.issued || "",
+        req.body.credentialLink || "",
+        req.body.thumbnail || null,
+        req.body.description || "",
+        req.body.category || "Other",
+        now,
+      ]
+    );
+    const result = await db.execute("SELECT * FROM certificates WHERE id = ?", [id]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-certificatesRouter.put("/:id", requireAuth, (req, res) => {
-  const certificates = readCertificates();
-  const index = certificates.findIndex((c) => c.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: "Certificate not found" });
+certificatesRouter.put("/:id", requireAuth, async (req, res) => {
+  try {
+    const existing = await db.execute("SELECT * FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (existing.rows.length === 0)
+      return res.status(404).json({ error: "Certificate not found" });
 
-  const updated = { ...certificates[index], ...req.body, id: req.params.id };
-  certificates[index] = updated;
-  writeCertificates(certificates);
-  res.json(updated);
+    const current = existing.rows[0];
+    await db.execute(
+      `UPDATE certificates SET title=?, issuer=?, issued=?, credentialLink=?, thumbnail=?, description=?, category=? WHERE id=?`,
+      [
+        req.body.title ?? current.title,
+        req.body.issuer ?? current.issuer,
+        req.body.issued ?? current.issued,
+        req.body.credentialLink ?? current.credentialLink,
+        req.body.thumbnail !== undefined ? req.body.thumbnail : current.thumbnail,
+        req.body.description ?? current.description,
+        req.body.category ?? current.category,
+        req.params.id,
+      ]
+    );
+    const result = await db.execute("SELECT * FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-certificatesRouter.delete("/:id", requireAuth, (req, res) => {
-  let certificates = readCertificates();
-  certificates = certificates.filter((c) => c.id !== req.params.id);
-  writeCertificates(certificates);
-  res.json({ success: true });
+certificatesRouter.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const result = await db.execute("DELETE FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (result.rowsAffected === 0)
+      return res.status(404).json({ error: "Certificate not found" });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
