@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "build": "cd .. && npm install && npm run build"
+    "build": "npm install && cd .. && npm install && npm run build"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
