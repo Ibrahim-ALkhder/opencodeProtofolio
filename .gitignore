@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Random root images (not used in project)
+6759cd4e-4fc4-4d9a-9211-29af9dd2bf0d.png
+photo_2026-03-28_09-34-03.jpg
+
+# Duplicates / temp
+New folder/
