@@ -38,6 +38,8 @@ export default function ProjectsSection() {
               <img
                 src={project.screenshots.desktop}
                 alt={`${project.title} desktop`}
+                loading="lazy"
+                decoding="async"
                 className="w-full rounded-[20px] border border-white/10 shadow-[0_24px_50px_rgba(0,0,0,0.45)]"
               />
             ) : (
@@ -69,6 +71,8 @@ export default function ProjectsSection() {
               <img
                 src={project.screenshots.tablet}
                 alt={`${project.title} tablet`}
+                loading="lazy"
+                decoding="async"
                 className="relative -mt-16 ml-8 w-3/5 max-w-xs rounded-[16px] border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
               />
             ) : (
@@ -83,6 +87,8 @@ export default function ProjectsSection() {
               <img
                 src={project.screenshots.mobile}
                 alt={`${project.title} mobile`}
+                loading="lazy"
+                decoding="async"
                 className="relative -mt-10 ml-auto mr-4 w-2/5 max-w-[160px] rounded-[14px] border border-white/10 shadow-[0_16px_34px_rgba(0,0,0,0.5)]"
               />
             ) : (
