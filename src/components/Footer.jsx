@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useCvUrl } from "../data/useData";
 
 export default function Footer() {
+  const cvUrl = useCvUrl();
   return (
     <footer className="footer-pro " id="Footer">
       <div className="footer-pro__glow footer-pro__glow--one" />
@@ -26,8 +28,8 @@ export default function Footer() {
               </a>
 
               <a
-                href="/Ibrahim-CV.pdf"
-                download
+                href={cvUrl}
+                download="Ibrahim-CV.pdf"
                 className="footer-pro__button footer-pro__button--ghost"
               >
                 Download CV

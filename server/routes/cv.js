@@ -1,5 +1,6 @@
 import { Router } from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import { requireAuth } from "./auth.js";
@@ -31,15 +32,17 @@ const upload = multer({
 
 export const cvRouter = Router();
 
+const DEFAULT_CV = { url: "/Ibrahim-CV.pdf", filename: "Ibrahim-CV.pdf" };
+
 cvRouter.get("/", async (req, res) => {
   try {
     const result = await db.execute("SELECT url, filename, updatedAt FROM cv ORDER BY id DESC LIMIT 1");
     if (result.rows.length === 0) {
-      return res.json({ url: "/Ibrahim-CV.pdf" });
+      return res.json(DEFAULT_CV);
     }
     res.json(result.rows[0]);
   } catch {
-    res.json({ url: "/Ibrahim-CV.pdf" });
+    res.json(DEFAULT_CV);
   }
 });
 
@@ -48,8 +51,12 @@ cvRouter.post("/upload", requireAuth, (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
 
     try {
+      const filePath = path.join(UPLOADS_DIR, req.file.filename);
+      const base64 = fs.readFileSync(filePath, { encoding: "base64" });
+      const dataUri = `data:application/pdf;base64,${base64}`;
+
       const cvData = {
-        url: `/uploads/${req.file.filename}`,
+        url: dataUri,
         filename: req.file.originalname,
         updatedAt: new Date().toISOString(),
       };

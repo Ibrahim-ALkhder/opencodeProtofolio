@@ -144,6 +144,9 @@ function CvTab() {
   const [file, setFile] = useState(null);
   const [msg, setMsg] = useState("");
 
+  const isDataUri = cvUrl.startsWith("data:");
+  const displayUrl = isDataUri ? "" : cvUrl;
+
   useEffect(() => {
     apiGetCv().then((data) => {
       if (data?.url) setCvUrl(data.url);
@@ -203,31 +206,39 @@ function CvTab() {
         <p className="mt-1 text-sm text-textSecondary">Paste a direct link to your CV PDF</p>
         <div className="mt-4 flex gap-3">
           <input
-            value={cvUrl}
+            value={displayUrl}
             onChange={(e) => setCvUrl(e.target.value)}
             placeholder="https://example.com/cv.pdf"
-            className="flex-1 rounded-xl border border-[#d1d9e6] bg-cardWhite px-4 py-2.5 text-sm text-textPrimary outline-none focus:border-softBlue/50"
+            disabled={isDataUri}
+            className="flex-1 rounded-xl border border-[#d1d9e6] bg-cardWhite px-4 py-2.5 text-sm text-textPrimary outline-none focus:border-softBlue/50 disabled:opacity-40"
           />
           <button
             onClick={handleUrl}
-            className="rounded-full bg-textPrimary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-textPrimary/90"
+            disabled={!cvUrl || isDataUri}
+            className="rounded-full bg-textPrimary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-textPrimary/90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Save
           </button>
         </div>
+        {isDataUri && (
+          <p className="mt-2 text-xs text-textSecondary">
+            CV is stored as embedded data. Use the upload section above to replace it.
+          </p>
+        )}
       </div>
 
       <div className="border-t border-[#d1d9e6] pt-8">
         <h3 className="text-xl font-semibold text-textPrimary">Current CV</h3>
         {cvUrl ? (
-          <a
-            href={cvUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-2 text-sm text-softBlue hover:underline"
-          >
-            {cvUrl}
-          </a>
+          <div className="mt-2 flex items-center gap-3">
+            <a
+              href={cvUrl}
+              download="Ibrahim-CV.pdf"
+              className="inline-flex items-center gap-2 text-sm text-softBlue hover:underline"
+            >
+              Download CV ({isDataUri ? "embedded" : "external"})
+            </a>
+          </div>
         ) : (
           <p className="mt-2 text-sm text-textSecondary">No CV set</p>
         )}

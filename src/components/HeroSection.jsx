@@ -6,8 +6,10 @@ import {
   useTransform,
   animate,
 } from "framer-motion";
+import { useCvUrl } from "../data/useData";
 
 export default function HeroSection() {
+  const cvUrl = useCvUrl();
   const sceneRef = useRef(null);
   const backTagRef = useRef(null);
 
@@ -167,7 +169,7 @@ const backScaleX = useTransform(springY, [0, 180], [1, 0.985]);
 
             <p className="email">alkhder09@gmail.com</p>
 
-            <a href="/Ibrahim-CV.pdf" download className="cv-button">
+            <a href={cvUrl} download="Ibrahim-CV.pdf" className="cv-button">
               Download CV
             </a>
           </div>
