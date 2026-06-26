@@ -670,6 +670,7 @@ export default function AdminPage() {
   usePageMeta("Admin — Ibrahim", "Admin panel for managing portfolio content.");
   const [authenticated, setAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     apiIsAuthenticated().then((ok) => {
@@ -678,6 +679,11 @@ export default function AdminPage() {
     });
   }, []);
 
+  const handleLogout = () => {
+    apiLogout();
+    setAuthenticated(false);
+  };
+
   if (!authChecked) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f3f4f6]">
@@ -685,16 +691,10 @@ export default function AdminPage() {
       </div>
     );
   }
-  const [activeTab, setActiveTab] = useState(0);
 
   if (!authenticated) {
     return <LoginForm onLogin={() => setAuthenticated(true)} />;
   }
-
-  const handleLogout = () => {
-    apiLogout();
-    setAuthenticated(false);
-  };
 
   return (
     <div className="min-h-screen bg-[#f3f4f6]">
