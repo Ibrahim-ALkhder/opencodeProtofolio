@@ -49,7 +49,7 @@ cvRouter.post("/upload", requireAuth, (req, res) => {
 
     try {
       const cvData = {
-        url: `/uploads/cv${path.extname(req.file.originalname)}`,
+        url: `/uploads/${req.file.filename}`,
         filename: req.file.originalname,
         updatedAt: new Date().toISOString(),
       };
