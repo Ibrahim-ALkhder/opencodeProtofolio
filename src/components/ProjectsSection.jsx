@@ -67,37 +67,39 @@ export default function ProjectsSection() {
               </div>
             )}
 
-            {project.screenshots?.tablet ? (
-              <img
-                src={project.screenshots.tablet}
-                alt={`${project.title} tablet`}
-                loading="lazy"
-                decoding="async"
-                className="relative -mt-16 ml-8 w-3/5 max-w-xs rounded-[16px] border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
-              />
-            ) : (
-              <div className="relative -mt-16 ml-8 w-3/5 max-w-xs rounded-[16px] border border-white/10 bg-gradient-to-br from-zinc-800 to-black shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-                <div className="flex aspect-[4/3] items-center justify-center">
-                  <p className="text-xs text-white/30">Tablet</p>
+            <div className="flex -mt-16 gap-3">
+              {project.screenshots?.tablet ? (
+                <img
+                  src={project.screenshots.tablet}
+                  alt={`${project.title} tablet`}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-3/5 max-w-xs rounded-[16px] border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+                />
+              ) : (
+                <div className="w-3/5 max-w-xs rounded-[16px] border border-white/10 bg-gradient-to-br from-zinc-800 to-black shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+                  <div className="flex aspect-[4/3] items-center justify-center">
+                    <p className="text-xs text-white/30">Tablet</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {project.screenshots?.mobile ? (
-              <img
-                src={project.screenshots.mobile}
-                alt={`${project.title} mobile`}
-                loading="lazy"
-                decoding="async"
-                className="relative -mt-10 ml-auto mr-4 w-2/5 max-w-[160px] rounded-[14px] border border-white/10 shadow-[0_16px_34px_rgba(0,0,0,0.5)]"
-              />
-            ) : (
-              <div className="relative -mt-10 ml-auto mr-4 w-2/5 max-w-[160px] rounded-[14px] border border-white/10 bg-gradient-to-br from-zinc-800 to-black shadow-[0_16px_34px_rgba(0,0,0,0.5)]">
-                <div className="flex aspect-[9/16] items-center justify-center">
-                  <p className="text-xs text-white/30">Mobile</p>
+              {project.screenshots?.mobile ? (
+                <img
+                  src={project.screenshots.mobile}
+                  alt={`${project.title} mobile`}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-2/5 max-w-[160px] rounded-[14px] border border-white/10 shadow-[0_16px_34px_rgba(0,0,0,0.5)]"
+                />
+              ) : (
+                <div className="w-2/5 max-w-[160px] rounded-[14px] border border-white/10 bg-gradient-to-br from-zinc-800 to-black shadow-[0_16px_34px_rgba(0,0,0,0.5)]">
+                  <div className="flex aspect-[9/16] items-center justify-center">
+                    <p className="text-xs text-white/30">Mobile</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </motion.div>
 
           {/* Right: Project Info */}
