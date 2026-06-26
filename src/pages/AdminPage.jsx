@@ -601,8 +601,7 @@ function LoginForm({ onLogin }) {
     setLoading(true);
     const result = await apiLogin(username, password);
     setLoading(false);
-    if (result?.token) {
-      localStorage.setItem("adminToken", result.token);
+    if (result?.success) {
       onLogin();
     } else {
       setError("Invalid username or password");
@@ -667,8 +666,24 @@ function LoginForm({ onLogin }) {
 }
 
 export default function AdminPage() {
-  useEffect(() => { document.title = "Admin — Ibrahim"; }, []);
-  const [authenticated, setAuthenticated] = useState(apiIsAuthenticated());
+  usePageMeta("Admin — Ibrahim", "Admin panel for managing portfolio content.");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    apiIsAuthenticated().then((ok) => {
+      setAuthenticated(ok);
+      setAuthChecked(true);
+    });
+  }, []);
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f3f4f6]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-textPrimary border-t-transparent" />
+      </div>
+    );
+  }
   const [activeTab, setActiveTab] = useState(0);
 
   if (!authenticated) {

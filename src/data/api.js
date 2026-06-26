@@ -1,21 +1,19 @@
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
-function getAuthHeaders() {
-  const token = localStorage.getItem("adminToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+function fetchOpts(options = {}) {
+  return {
+    credentials: "include",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  };
 }
 
 async function fetchData(endpoint, options = {}) {
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-      ...options.headers,
-    };
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    const res = await fetch(`${API_BASE}${endpoint}`, fetchOpts(options));
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -24,8 +22,12 @@ async function fetchData(endpoint, options = {}) {
   }
 }
 
-export async function apiGetProjects() {
-  return fetchData("/projects");
+export async function apiGetProjects(limit, offset) {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", limit);
+  if (offset) params.set("offset", offset);
+  const qs = params.toString();
+  return fetchData(`/projects${qs ? "?" + qs : ""}`);
 }
 
 export async function apiGetProject(id) {
@@ -63,8 +65,12 @@ export async function apiUploadProjectScreenshot(id, type, imageData) {
   });
 }
 
-export async function apiGetCertificates() {
-  return fetchData("/certificates");
+export async function apiGetCertificates(limit, offset) {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", limit);
+  if (offset) params.set("offset", offset);
+  const qs = params.toString();
+  return fetchData(`/certificates${qs ? "?" + qs : ""}`);
 }
 
 export async function apiGetCertificate(id) {
@@ -99,7 +105,7 @@ export async function apiUploadCv(file) {
   try {
     const res = await fetch(`${API_BASE}/cv/upload`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      credentials: "include",
       body: formData,
     });
     if (!res.ok) throw new Error("Upload failed");
@@ -121,22 +127,38 @@ export async function apiLogin(username, password) {
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
     if (!res.ok) throw new Error("Login failed");
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (err) {
     console.warn("Login failed:", err.message);
     return null;
   }
 }
 
-export function apiLogout() {
-  localStorage.removeItem("adminToken");
+export async function apiLogout() {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // ignore
+  }
 }
 
-export function apiIsAuthenticated() {
-  return !!localStorage.getItem("adminToken");
+export async function apiIsAuthenticated() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/check`, {
+      credentials: "include",
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.authenticated;
+  } catch {
+    return false;
+  }
 }

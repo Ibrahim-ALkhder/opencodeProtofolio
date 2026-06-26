@@ -32,7 +32,7 @@ export function useProjects() {
     if (cache.projects) return;
     cachedFetch(
       "projects",
-      apiGetProjects,
+      () => apiGetProjects(100, 0).then(r => r ? r.projects : null),
       staticProjects
     ).then(setData).finally(() => setLoading(false));
   }, []);
@@ -48,7 +48,7 @@ export function useCertificates() {
     if (cache.certificates) return;
     cachedFetch(
       "certificates",
-      apiGetCertificates,
+      () => apiGetCertificates(100, 0).then(r => r ? r.certificates : null),
       staticCertificates
     ).then(setData).finally(() => setLoading(false));
   }, []);

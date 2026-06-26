@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import usePageMeta from "../hooks/usePageMeta";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -6,7 +7,10 @@ import { useCertificates } from "../data/useData";
 import { certificateCategories } from "../data/data";
 
 export default function CertificatesPage() {
-  useEffect(() => { document.title = "Certifications — Ibrahim"; }, []);
+  usePageMeta(
+    "Certifications — Ibrahim",
+    "View professional certifications, courses, and continuous learning achievements."
+  );
   const { certificates } = useCertificates();
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");

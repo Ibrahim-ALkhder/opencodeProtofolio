@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import usePageMeta from "../hooks/usePageMeta";
 import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
 import ProjectsSection from "../components/ProjectsSection";
@@ -8,7 +9,10 @@ import CertificatesSection from "../components/CertificatesSection";
 import Footer from "../components/Footer";
 
 export default function HomePage() {
-  useEffect(() => { document.title = "Ibrahim | Full Stack Developer"; }, []);
+  usePageMeta(
+    "Ibrahim | Full Stack Developer",
+    "Full Stack Developer specializing in React, Node.js, and modern web applications. Explore projects, certifications, and professional experience."
+  );
   const location = useLocation();
 
   useEffect(() => {

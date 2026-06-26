@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import usePageMeta from "../hooks/usePageMeta";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -9,7 +10,10 @@ const categories = ["All", "Frontend", "Backend", "Full Stack", "Design"];
 const ITEMS_PER_PAGE = 6;
 
 export default function ProjectsPage() {
-  useEffect(() => { document.title = "Projects — Ibrahim"; }, []);
+  usePageMeta(
+    "Projects — Ibrahim",
+    "Browse my portfolio of web development projects including full stack applications, frontend designs, and backend systems."
+  );
   const { projects } = useProjects();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");

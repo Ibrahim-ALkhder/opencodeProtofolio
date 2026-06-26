@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import usePageMeta from "../hooks/usePageMeta";
 import { motion } from "framer-motion";
 import { Link, useParams, Navigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -23,7 +23,7 @@ function ScreenshotBlock({ src, label, aspect }) {
 }
 
 export default function ProjectDetailPage() {
-  useEffect(() => { document.title = "Project — Ibrahim"; }, []);
+  usePageMeta("Project — Ibrahim", "Detailed case study of a web development project by Ibrahim.");
   const { slug } = useParams();
   const { projects, loading } = useProjects();
   const project = projects.find((p) => p.slug === slug);

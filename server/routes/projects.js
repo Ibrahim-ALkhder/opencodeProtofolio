@@ -1,9 +1,35 @@
 import { Router } from "express";
+import express from "express";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { requireAuth } from "./auth.js";
 import db from "../db.js";
 
 export const projectsRouter = Router();
+
+const SCREENSHOT_TYPES = ["desktop", "tablet", "mobile"];
+
+const projectSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  shortDescription: z.string().max(500).optional().default(""),
+  description: z.string().optional().default(""),
+  variant: z.string().optional().default("dashboard"),
+  isFeatured: z.boolean().optional().default(false),
+  problem: z.string().optional().default(""),
+  solution: z.string().optional().default(""),
+  features: z.array(z.string()).optional().default([]),
+  techStack: z.array(z.string()).optional().default([]),
+  challenges: z.array(z.string()).optional().default([]),
+  results: z.string().optional().default(""),
+  timeline: z.string().optional().default(""),
+  liveUrl: z.string().optional().default(""),
+  githubUrl: z.string().optional().default(""),
+  screenshots: z.object({
+    desktop: z.string().nullable().optional(),
+    tablet: z.string().nullable().optional(),
+    mobile: z.string().nullable().optional(),
+  }).optional().default({ desktop: null, tablet: null, mobile: null }),
+});
 
 function parseProject(row) {
   return {
@@ -27,8 +53,20 @@ function generateSlug(title) {
 
 projectsRouter.get("/", async (req, res) => {
   try {
-    const result = await db.execute("SELECT * FROM projects ORDER BY createdAt DESC");
-    res.json(result.rows.map(parseProject));
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = parseInt(req.query.offset) || 0;
+    const countResult = await db.execute("SELECT COUNT(*) as total FROM projects");
+    const total = countResult.rows[0].total;
+    const result = await db.execute(
+      "SELECT * FROM projects ORDER BY createdAt DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+    res.json({
+      projects: result.rows.map(parseProject),
+      total,
+      limit,
+      offset,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -49,30 +87,35 @@ projectsRouter.get("/:id", async (req, res) => {
 
 projectsRouter.post("/", requireAuth, async (req, res) => {
   try {
-    const slug = req.body.slug || generateSlug(req.body.title);
+    const parsed = projectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+    const data = parsed.data;
+    const slug = generateSlug(data.title);
     const id = uuidv4();
     const now = new Date().toISOString();
     await db.execute(
       `INSERT INTO projects (id, title, slug, shortDescription, description, button, variant, isFeatured, problem, solution, features, techStack, challenges, results, timeline, liveUrl, githubUrl, screenshots, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        req.body.title || "",
+        data.title,
         slug,
-        req.body.shortDescription || "",
-        req.body.description || "",
+        data.shortDescription,
+        data.description,
         "View Project",
-        req.body.variant || "dashboard",
-        req.body.isFeatured ? 1 : 0,
-        req.body.problem || "",
-        req.body.solution || "",
-        JSON.stringify(req.body.features || []),
-        JSON.stringify(req.body.techStack || []),
-        JSON.stringify(req.body.challenges || []),
-        req.body.results || "",
-        req.body.timeline || "",
-        req.body.liveUrl || "",
-        req.body.githubUrl || "",
-        JSON.stringify(req.body.screenshots || { desktop: null, tablet: null, mobile: null }),
+        data.variant,
+        data.isFeatured ? 1 : 0,
+        data.problem,
+        data.solution,
+        JSON.stringify(data.features),
+        JSON.stringify(data.techStack),
+        JSON.stringify(data.challenges),
+        data.results,
+        data.timeline,
+        data.liveUrl,
+        data.githubUrl,
+        JSON.stringify(data.screenshots),
         now,
       ]
     );
@@ -136,7 +179,7 @@ projectsRouter.delete("/:id", requireAuth, async (req, res) => {
   }
 });
 
-projectsRouter.put("/:id/screenshots/:type", requireAuth, async (req, res) => {
+projectsRouter.put("/:id/screenshots/:type", requireAuth, express.json({ limit: "10mb" }), async (req, res) => {
   try {
     const existing = await db.execute("SELECT * FROM projects WHERE id = ?", [
       req.params.id,
@@ -145,8 +188,8 @@ projectsRouter.put("/:id/screenshots/:type", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Project not found" });
 
     const { type } = req.params;
-    if (!["desktop", "tablet", "mobile"].includes(type)) {
-      return res.status(400).json({ error: "Invalid screenshot type" });
+    if (!SCREENSHOT_TYPES.includes(type)) {
+      return res.status(400).json({ error: "Invalid screenshot type. Must be one of: " + SCREENSHOT_TYPES.join(", ") });
     }
 
     const currentScreenshots = JSON.parse(existing.rows[0].screenshots || "{}");

@@ -68,6 +68,12 @@ export async function initDb() {
       "Ibrahim-CV.pdf",
     ]);
   }
+
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_projects_slug ON projects(slug)");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_projects_created ON projects(createdAt)");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_projects_featured ON projects(isFeatured)");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_certificates_category ON certificates(category)");
+  await db.execute("CREATE INDEX IF NOT EXISTS idx_certificates_created ON certificates(createdAt)");
 }
 
 export default db;

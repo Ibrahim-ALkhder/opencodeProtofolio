@@ -1,14 +1,37 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { requireAuth } from "./auth.js";
 import db from "../db.js";
 
 export const certificatesRouter = Router();
 
+const certificateSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  issuer: z.string().min(1, "Issuer is required").max(200),
+  issued: z.string().optional().default(""),
+  credentialLink: z.string().optional().default(""),
+  thumbnail: z.string().nullable().optional().default(null),
+  description: z.string().optional().default(""),
+  category: z.string().optional().default("Other"),
+});
+
 certificatesRouter.get("/", async (req, res) => {
   try {
-    const result = await db.execute("SELECT * FROM certificates ORDER BY createdAt DESC");
-    res.json(result.rows);
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = parseInt(req.query.offset) || 0;
+    const countResult = await db.execute("SELECT COUNT(*) as total FROM certificates");
+    const total = countResult.rows[0].total;
+    const result = await db.execute(
+      "SELECT * FROM certificates ORDER BY createdAt DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+    res.json({
+      certificates: result.rows,
+      total,
+      limit,
+      offset,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -29,19 +52,24 @@ certificatesRouter.get("/:id", async (req, res) => {
 
 certificatesRouter.post("/", requireAuth, async (req, res) => {
   try {
+    const parsed = certificateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+    const data = parsed.data;
     const id = uuidv4();
     const now = new Date().toISOString();
     await db.execute(
       `INSERT INTO certificates (id, title, issuer, issued, credentialLink, thumbnail, description, category, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        req.body.title || "",
-        req.body.issuer || "",
-        req.body.issued || "",
-        req.body.credentialLink || "",
-        req.body.thumbnail || null,
-        req.body.description || "",
-        req.body.category || "Other",
+        data.title,
+        data.issuer,
+        data.issued,
+        data.credentialLink,
+        data.thumbnail,
+        data.description,
+        data.category,
         now,
       ]
     );

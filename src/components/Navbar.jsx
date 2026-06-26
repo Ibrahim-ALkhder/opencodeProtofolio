@@ -98,7 +98,8 @@ export default function Navbar() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="relative z-50 flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/80 md:hidden"
-            aria-label="Toggle menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
             <div className="flex flex-col items-center gap-1">
               <span
