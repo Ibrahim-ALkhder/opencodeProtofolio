@@ -343,10 +343,10 @@ function ProjectsTab() {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    apiGetProjects().then(setProjects);
+    apiGetProjects(100, 0).then((r) => r?.projects && setProjects(r.projects));
   }, []);
 
-  const refresh = () => apiGetProjects().then(setProjects);
+  const refresh = () => apiGetProjects(100, 0).then((r) => r?.projects && setProjects(r.projects));
 
   const handleSave = async (data) => {
     if (editing) {
@@ -456,10 +456,10 @@ function CertificatesTab() {
   });
 
   useEffect(() => {
-    apiGetCertificates().then(setCerts);
+    apiGetCertificates(100, 0).then((r) => r?.certificates && setCerts(r.certificates));
   }, []);
 
-  const refresh = () => apiGetCertificates().then(setCerts);
+  const refresh = () => apiGetCertificates(100, 0).then((r) => r?.certificates && setCerts(r.certificates));
 
   const set = (key) => (e) =>
     setForm((f) => ({ ...f, [key]: e.target?.value ?? e }));
