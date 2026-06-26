@@ -34,6 +34,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        serif: ['"Cormorant Garamond"', "serif"],
       },
       animation: {
         float: "float 5s ease-in-out infinite",

@@ -433,7 +433,12 @@ function ProjectsTab() {
           </div>
         ))}
         {projects.length === 0 && (
-          <p className="py-8 text-center text-sm text-textSecondary">No projects yet</p>
+          <div className="py-12 text-center">
+            <svg className="mx-auto h-10 w-10 text-textSecondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p className="mt-3 text-sm text-textSecondary">No projects yet</p>
+          </div>
         )}
       </div>
     </div>
@@ -572,7 +577,12 @@ function CertificatesTab() {
           </div>
         ))}
         {certs.length === 0 && (
-          <p className="py-8 text-center text-sm text-textSecondary">No certificates yet</p>
+          <div className="py-12 text-center">
+            <svg className="mx-auto h-10 w-10 text-textSecondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <p className="mt-3 text-sm text-textSecondary">No certificates yet</p>
+          </div>
         )}
       </div>
     </div>
@@ -657,6 +667,7 @@ function LoginForm({ onLogin }) {
 }
 
 export default function AdminPage() {
+  useEffect(() => { document.title = "Admin — Ibrahim"; }, []);
   const [authenticated, setAuthenticated] = useState(apiIsAuthenticated());
   const [activeTab, setActiveTab] = useState(0);
 

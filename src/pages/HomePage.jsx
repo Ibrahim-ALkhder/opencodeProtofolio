@@ -8,6 +8,7 @@ import CertificatesSection from "../components/CertificatesSection";
 import Footer from "../components/Footer";
 
 export default function HomePage() {
+  useEffect(() => { document.title = "Ibrahim | Full Stack Developer"; }, []);
   const location = useLocation();
 
   useEffect(() => {

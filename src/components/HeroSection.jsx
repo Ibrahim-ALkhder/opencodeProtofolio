@@ -110,7 +110,7 @@ const backScaleX = useTransform(springY, [0, 180], [1, 0.985]);
           <div className="paper-noise"></div>
           <div className="paper-smudge"></div>
           <div className="barcode"></div>
-          <div className="sweden">made in sweden</div>
+          <div className="sweden">made in Sudan</div>
           <div className="rebranding">ongoing rebranding</div>
         </motion.div>
 
@@ -165,7 +165,7 @@ const backScaleX = useTransform(springY, [0, 180], [1, 0.985]);
 
             <div className="divider"></div>
 
-            <p className="email">ibrahim@email.com</p>
+            <p className="email">alkhder09@gmail.com</p>
 
             <a href="/Ibrahim-CV.pdf" download className="cv-button">
               Download CV

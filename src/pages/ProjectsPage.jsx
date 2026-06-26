@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -9,16 +9,19 @@ const categories = ["All", "Frontend", "Backend", "Full Stack", "Design"];
 const ITEMS_PER_PAGE = 6;
 
 export default function ProjectsPage() {
+  useEffect(() => { document.title = "Projects — Ibrahim"; }, []);
   const { projects } = useProjects();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = projects.filter((p) => {
+    const matchesCategory =
+      activeCategory === "All" || p.category === activeCategory;
     const matchesSearch =
       p.title?.toLowerCase().includes(search.toLowerCase()) ||
       p.shortDescription?.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+    return matchesCategory && matchesSearch;
   });
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -107,9 +110,18 @@ export default function ProjectsPage() {
           <div className="mx-auto max-w-7xl">
             {paginated.length === 0 ? (
               <div className="py-20 text-center">
-                <p className="text-textSecondary">
+                <svg className="mx-auto h-12 w-12 text-textSecondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <p className="mt-4 text-textSecondary">
                   No projects match your criteria.
                 </p>
+                <button
+                  onClick={() => { setSearch(""); setActiveCategory("All"); }}
+                  className="mt-4 text-sm text-softBlue hover:underline"
+                >
+                  Clear filters
+                </button>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

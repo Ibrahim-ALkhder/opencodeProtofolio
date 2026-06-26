@@ -19,8 +19,8 @@ export default function Footer() {
 
             <div className="footer-pro__cta-row">
               <a
-                href="mailto:ibrahim@email.com"
-                className="footer-pro__button footer-pro__button--primary"
+              href="mailto:alkhder09@gmail.com"
+              className="footer-pro__button footer-pro__button--primary"
               >
                 Let&apos;s Talk
               </a>
@@ -37,27 +37,31 @@ export default function Footer() {
 
           <div className="footer-pro__cards">
             <a
-              href="mailto:ibrahim@email.com"
+              href="mailto:alkhder09@gmail.com"
               className="footer-pro__card"
             >
               <span className="footer-pro__card-label">Email</span>
-              <span className="footer-pro__card-value">ibrahim@email.com</span>
+              <span className="footer-pro__card-value">alkhder09@gmail.com</span>
             </a>
 
             <a
-              href="#"
+              href="https://github.com/Ibrahim-ALkhder"
+              target="_blank"
+              rel="noopener noreferrer"
               className="footer-pro__card"
             >
               <span className="footer-pro__card-label">GitHub</span>
-              <span className="footer-pro__card-value">github.com/ibrahim</span>
+              <span className="footer-pro__card-value">github.com/Ibrahim-ALkhder</span>
             </a>
 
             <a
-              href="#"
+              href="https://www.linkedin.com/in/abraham-alkhder-342775302"
+              target="_blank"
+              rel="noopener noreferrer"
               className="footer-pro__card"
             >
               <span className="footer-pro__card-label">LinkedIn</span>
-              <span className="footer-pro__card-value">linkedin.com/in/ibrahim</span>
+              <span className="footer-pro__card-value">linkedin.com/in/abraham-alkhder</span>
             </a>
 
             <Link
