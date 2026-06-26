@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import usePageMeta from "../hooks/usePageMeta";
 import Navbar from "../components/Navbar";
 import {
   apiGetProjects,
