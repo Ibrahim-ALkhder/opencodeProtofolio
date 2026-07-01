@@ -51,12 +51,9 @@ cvRouter.post("/upload", requireAuth, (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
 
     try {
-      const filePath = path.join(UPLOADS_DIR, req.file.filename);
-      const base64 = fs.readFileSync(filePath, { encoding: "base64" });
-      const dataUri = `data:application/pdf;base64,${base64}`;
-
+      const url = `/uploads/${req.file.filename}`;
       const cvData = {
-        url: dataUri,
+        url,
         filename: req.file.originalname,
         updatedAt: new Date().toISOString(),
       };

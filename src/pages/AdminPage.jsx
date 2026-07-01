@@ -15,6 +15,8 @@ import {
   apiGetCv,
   apiUploadCv,
   apiSetCvUrl,
+  apiUploadProjectScreenshot,
+  apiUploadCertificateThumbnail,
   apiLogin,
   apiLogout,
   apiIsAuthenticated,
@@ -23,14 +25,16 @@ import {
 const tabs = ["CV", "Projects", "Certificates"];
 
 function FileUpload({ label, accept, value, onChange }) {
+  const previewUrl = value instanceof File ? URL.createObjectURL(value) : value;
+
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-textSecondary">{label}</label>
       {value && (
         <div className="mb-2 overflow-hidden rounded-xl border border-[#d1d9e6] bg-cardWhite">
-          {value.startsWith("data:image") ? (
+          {value instanceof File || (typeof value === "string" && (value.startsWith("data:image") || value.startsWith("http") || value.startsWith("/uploads"))) ? (
             <img
-              src={value}
+              src={previewUrl}
               alt="Preview"
               className="max-h-48 w-full object-contain"
             />
@@ -50,13 +54,7 @@ function FileUpload({ label, accept, value, onChange }) {
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (ev) => onChange(ev.target?.result || "");
-          if (accept === "application/pdf" || accept?.includes("pdf")) {
-            onChange(file);
-          } else {
-            reader.readAsDataURL(file);
-          }
+          onChange(file);
         }}
         className="w-full text-sm text-textSecondary file:mr-3 file:rounded-full file:border-0 file:bg-softBlue/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-softBlue hover:file:bg-softBlue/20"
       />
@@ -348,6 +346,23 @@ function ProjectForm({ project, onSave, onCancel }) {
   );
 }
 
+async function uploadProjectScreenshots(id, screenshots) {
+  const types = ["desktop", "tablet", "mobile"];
+  const urls = {};
+  for (const type of types) {
+    const file = screenshots?.[type];
+    if (file instanceof File) {
+      const result = await apiUploadProjectScreenshot(id, type, file);
+      if (result?.screenshots?.[type]) {
+        urls[type] = result.screenshots[type];
+      }
+    } else if (typeof file === "string" && file) {
+      urls[type] = file;
+    }
+  }
+  return urls;
+}
+
 function ProjectsTab() {
   const [projects, setProjects] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -361,9 +376,16 @@ function ProjectsTab() {
 
   const handleSave = async (data) => {
     if (editing) {
-      await apiUpdateProject(editing.id, data);
+      const screenshots = await uploadProjectScreenshots(editing.id, data.screenshots);
+      await apiUpdateProject(editing.id, { ...data, screenshots });
     } else {
-      await apiCreateProject(data);
+      const created = await apiCreateProject(data);
+      if (created?.id) {
+        const screenshots = await uploadProjectScreenshots(created.id, data.screenshots);
+        if (Object.keys(screenshots).length > 0) {
+          await apiUpdateProject(created.id, { ...data, screenshots });
+        }
+      }
     }
     setEditing(null);
     setShowForm(false);
@@ -488,10 +510,19 @@ function CertificatesTab() {
   };
 
   const handleSave = async () => {
+    const thumbnailFile = form.thumbnail instanceof File ? form.thumbnail : null;
+    const formData = { ...form, thumbnail: thumbnailFile ? null : form.thumbnail };
+
     if (editing) {
-      await apiUpdateCertificate(editing.id, form);
+      await apiUpdateCertificate(editing.id, formData);
+      if (thumbnailFile) {
+        await apiUploadCertificateThumbnail(editing.id, thumbnailFile);
+      }
     } else {
-      await apiCreateCertificate(form);
+      const created = await apiCreateCertificate(formData);
+      if (created?.id && thumbnailFile) {
+        await apiUploadCertificateThumbnail(created.id, thumbnailFile);
+      }
     }
     resetForm();
     refresh();

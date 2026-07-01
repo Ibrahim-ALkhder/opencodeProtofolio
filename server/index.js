@@ -69,7 +69,8 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-["data", "uploads"].forEach((dir) => {
+const uploadSubdirs = ["properties", "certificates"];
+["data", "uploads", ...uploadSubdirs.map((d) => `uploads/${d}`)].forEach((dir) => {
   const p = path.join(__dirname, dir);
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
 });

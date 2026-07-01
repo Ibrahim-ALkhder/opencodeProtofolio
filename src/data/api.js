@@ -58,11 +58,38 @@ export async function apiDeleteProject(id) {
   return fetchData(`/projects/${id}`, { method: "DELETE" });
 }
 
-export async function apiUploadProjectScreenshot(id, type, imageData) {
-  return fetchData(`/projects/${id}/screenshots/${type}`, {
-    method: "PUT",
-    body: JSON.stringify({ image: imageData }),
-  });
+export async function apiUploadProjectScreenshot(id, type, file) {
+  const formData = new FormData();
+  formData.append("image", file);
+  try {
+    const res = await fetch(`${API_BASE}/projects/${id}/screenshots/${type}`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Screenshot upload failed");
+    return await res.json();
+  } catch (err) {
+    console.warn("Screenshot upload failed:", err.message);
+    return null;
+  }
+}
+
+export async function apiUploadCertificateThumbnail(id, file) {
+  const formData = new FormData();
+  formData.append("image", file);
+  try {
+    const res = await fetch(`${API_BASE}/certificates/${id}/thumbnail`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+    if (!res.ok) throw new Error("Thumbnail upload failed");
+    return await res.json();
+  } catch (err) {
+    console.warn("Thumbnail upload failed:", err.message);
+    return null;
+  }
 }
 
 export async function apiGetCertificates(limit, offset) {

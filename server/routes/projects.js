@@ -1,9 +1,9 @@
 import { Router } from "express";
-import express from "express";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { requireAuth } from "./auth.js";
 import db from "../db.js";
+import { upload, saveImage } from "../upload.js";
 
 export const projectsRouter = Router();
 
@@ -179,7 +179,7 @@ projectsRouter.delete("/:id", requireAuth, async (req, res) => {
   }
 });
 
-projectsRouter.put("/:id/screenshots/:type", requireAuth, express.json({ limit: "10mb" }), async (req, res) => {
+projectsRouter.post("/:id/screenshots/:type", requireAuth, upload.single("image"), async (req, res) => {
   try {
     const existing = await db.execute("SELECT * FROM projects WHERE id = ?", [
       req.params.id,
@@ -189,11 +189,17 @@ projectsRouter.put("/:id/screenshots/:type", requireAuth, express.json({ limit: 
 
     const { type } = req.params;
     if (!SCREENSHOT_TYPES.includes(type)) {
-      return res.status(400).json({ error: "Invalid screenshot type. Must be one of: " + SCREENSHOT_TYPES.join(", ") });
+      return res.status(400).json({ error: "Invalid screenshot type" });
     }
 
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+
+    const url = await saveImage(req.file.buffer, "properties", `project-${req.params.id}-${type}`);
+
     const currentScreenshots = JSON.parse(existing.rows[0].screenshots || "{}");
-    currentScreenshots[type] = req.body.image;
+    currentScreenshots[type] = url;
 
     await db.execute("UPDATE projects SET screenshots = ? WHERE id = ?", [
       JSON.stringify(currentScreenshots),

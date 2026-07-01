@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { requireAuth } from "./auth.js";
 import db from "../db.js";
+import { upload, saveImage } from "../upload.js";
 
 export const certificatesRouter = Router();
 
@@ -102,6 +103,34 @@ certificatesRouter.put("/:id", requireAuth, async (req, res) => {
         req.params.id,
       ]
     );
+    const result = await db.execute("SELECT * FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+certificatesRouter.post("/:id/thumbnail", requireAuth, upload.single("image"), async (req, res) => {
+  try {
+    const existing = await db.execute("SELECT * FROM certificates WHERE id = ?", [
+      req.params.id,
+    ]);
+    if (existing.rows.length === 0)
+      return res.status(404).json({ error: "Certificate not found" });
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+
+    const url = await saveImage(req.file.buffer, "certificates", `cert-${req.params.id}`);
+
+    await db.execute("UPDATE certificates SET thumbnail = ? WHERE id = ?", [
+      url,
+      req.params.id,
+    ]);
+
     const result = await db.execute("SELECT * FROM certificates WHERE id = ?", [
       req.params.id,
     ]);
